@@ -42,15 +42,11 @@ namespace MoneySaverAPI
             {
                 c.AddPolicy("AllowOrigin", options => options.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
             });
-
-            //JSON serializer 
-            services.AddControllersWithViews().AddNewtonsoftJson(options =>
-            options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore)
-                .AddNewtonsoftJson(options => options.SerializerSettings.ContractResolver = new DefaultContractResolver());
+            services.AddSingleton(authenticationSettings);
             services.AddDbContext<MoneySaverDbContext>(o => o.UseSqlServer(connection));
             services.AddControllers().AddFluentValidation();
             services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
-            services.AddScoped<IValidator<User>, RegisterUserValidator>();
+            services.AddScoped<IValidator<RegisterUserDto>, RegisterUserValidator>();
             services.AddAuthentication(option =>
             {
                 option.DefaultAuthenticateScheme = "Bearer";

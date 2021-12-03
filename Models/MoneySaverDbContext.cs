@@ -62,10 +62,7 @@ namespace MoneySaverAPI.Models
                 entity.Property(u => u.LastName)
                 .HasMaxLength(50);
 
-                entity.Property(u => u.Password)
-                .IsRequired();
-
-                entity.Property(u => u.ConfirmPassword)
+                entity.Property(u => u.PasswordHash)
                 .IsRequired();
             });
 
