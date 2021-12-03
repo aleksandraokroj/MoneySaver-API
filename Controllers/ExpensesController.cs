@@ -9,6 +9,7 @@ using System.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using MoneySaverAPI.Models;
 using System.Globalization;
+using Microsoft.EntityFrameworkCore;
 
 namespace MoneySaverAPI.Controllers
 {
@@ -16,107 +17,75 @@ namespace MoneySaverAPI.Controllers
     [ApiController]
     public class ExpensesController : ControllerBase
     {
-        private readonly IConfiguration _configuration;
+        private readonly MoneySaverDbContext _context;
 
-        public ExpensesController(IConfiguration configuration)
+        public ExpensesController(MoneySaverDbContext context)
         {
-            _configuration = configuration;
+            _context = context;
         }
 
         [HttpGet]
-        public JsonResult Get()
+        public async Task<ActionResult<IEnumerable<Expense>>> GetExpense()
         {
-            string query = @"select * from dbo.Expense";
-            DataTable table = new DataTable();
-            string sqlDataSource = _configuration.GetConnectionString("MoneySaverCon");
-            SqlDataReader myReader;
-            using(SqlConnection myCon=new SqlConnection(sqlDataSource))
-            {
-                myCon.Open();
-                using(SqlCommand myCommand=new SqlCommand(query, myCon))
-                {
-                    myReader = myCommand.ExecuteReader();
-                    table.Load(myReader);
-                    myReader.Close();
-                    myCon.Close();
-                }
-            }
-            return new JsonResult(table);
+            return await _context.Expense.ToListAsync();
         }
 
         [HttpPost]
-        public JsonResult Post(Expense exp)
+        public async Task<ActionResult<Expense>> PostExpense(Expense exp)
         {
-            string query = @"insert into dbo.Expense values (@ExpenseName, @ExpenseCategory, @ExpenseAmount, @ExpenseDate)";
-            DataTable table = new DataTable();
-            string sqlDataSource = _configuration.GetConnectionString("MoneySaverCon");
-            SqlDataReader myReader;
-            using (SqlConnection myCon = new SqlConnection(sqlDataSource))
-            {
-                myCon.Open();
-                using (SqlCommand myCommand = new SqlCommand(query, myCon))
-                {
-                    myCommand.Parameters.AddWithValue("@ExpenseName", exp.ExpenseName);
-                    myCommand.Parameters.AddWithValue("@ExpenseCategory", exp.ExpenseCategory);
-                    myCommand.Parameters.AddWithValue("@ExpenseAmount", exp.ExpenseAmount);
-                    myCommand.Parameters.AddWithValue("@ExpenseDate", exp.ExpenseDate);
-                    myReader = myCommand.ExecuteReader();
-                    table.Load(myReader);
-                    myReader.Close();
-                    myCon.Close();
-                }
-            }
-            return new JsonResult("Added Sucessfuly!");
+            _context.Expense.Add(exp);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction("GetExpense", new { id = exp.ExpenseId }, exp);
         }
 
-        [HttpPut]
-        public JsonResult Put(Expense exp)
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutExpense(int id, Expense exp)
         {
-            string query = @"update dbo.Expense set ExpenseName = @ExpenseName, ExpenseCategory=@ExpenseCategory, 
-                            ExpenseAmount=@ExpenseAmount, ExpenseDate = @ExpenseDate
-                            where ExpenseId = @ExpenseId";
-            DataTable table = new DataTable();
-            string sqlDataSource = _configuration.GetConnectionString("MoneySaverCon");
-            SqlDataReader myReader;
-            using (SqlConnection myCon = new SqlConnection(sqlDataSource))
+            System.Diagnostics.Debug.WriteLine(id);
+            System.Diagnostics.Debug.WriteLine(exp.ExpenseId);
+            if (id != exp.ExpenseId)
             {
-                myCon.Open();
-                using (SqlCommand myCommand = new SqlCommand(query, myCon))
+                return BadRequest();
+            }
+            _context.Entry(exp).State = EntityState.Modified;
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!ExpenseExists(id))
                 {
-                    myCommand.Parameters.AddWithValue("@ExpenseId", exp.ExpenseId);
-                    myCommand.Parameters.AddWithValue("@ExpenseName", exp.ExpenseName);
-                    myCommand.Parameters.AddWithValue("@ExpenseCategory", exp.ExpenseCategory);
-                    myCommand.Parameters.AddWithValue("@ExpenseAmount", exp.ExpenseAmount);
-                    myCommand.Parameters.AddWithValue("@ExpenseDate", exp.ExpenseDate);
-                    myReader = myCommand.ExecuteReader();
-                    table.Load(myReader);
-                    myReader.Close();
-                    myCon.Close();
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
                 }
             }
-            return new JsonResult("Updated Sucessfuly!");
+            return NoContent();
         }
+    
 
         [HttpDelete("{id}")]
-        public JsonResult Delete(int id)
+        public async Task<ActionResult<Expense>> DeleteExpense(int id)
         {
-            string query = @"delete from dbo.Expense where ExpenseId = @ExpenseId";
-            DataTable table = new DataTable();
-            string sqlDataSource = _configuration.GetConnectionString("MoneySaverCon");
-            SqlDataReader myReader;
-            using (SqlConnection myCon = new SqlConnection(sqlDataSource))
+            var exp = await _context.Expense.FindAsync(id);
+            if (exp == null)
             {
-                myCon.Open();
-                using (SqlCommand myCommand = new SqlCommand(query, myCon))
-                {
-                    myCommand.Parameters.AddWithValue("@ExpenseId", id);
-                    myReader = myCommand.ExecuteReader();
-                    table.Load(myReader);
-                    myReader.Close();
-                    myCon.Close();
-                }
+                return NotFound();
             }
-            return new JsonResult("Deleted succesfully!");
+
+            _context.Expense.Remove(exp);
+            await _context.SaveChangesAsync();
+
+            return exp;
+        }
+
+        private bool ExpenseExists(int id)
+        {
+            return _context.Expense.Any(e => e.ExpenseId == id);
         }
 
 

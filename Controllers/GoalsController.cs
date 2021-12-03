@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using MoneySaverAPI.Models;
 
@@ -15,107 +16,73 @@ namespace MoneySaverAPI.Controllers
     [ApiController]
     public class GoalsController : ControllerBase
     {
-        private readonly IConfiguration _configuration;
+        private readonly MoneySaverDbContext _context;
 
-        public GoalsController(IConfiguration configuration)
+        public GoalsController(MoneySaverDbContext context)
         {
-            _configuration = configuration;
+            _context = context;
         }
 
         [HttpGet]
-        public JsonResult Get()
+        public async Task<ActionResult<IEnumerable<Goal>>> GetGoal()
         {
-            string query = @"select * from dbo.Goal";
-            DataTable table = new DataTable();
-            string sqlDataSource = _configuration.GetConnectionString("MoneySaverCon");
-            SqlDataReader myReader;
-            using (SqlConnection myCon = new SqlConnection(sqlDataSource))
-            {
-                myCon.Open();
-                using (SqlCommand myCommand = new SqlCommand(query, myCon))
-                {
-                    myReader = myCommand.ExecuteReader();
-                    table.Load(myReader);
-                    myReader.Close();
-                    myCon.Close();
-                }
-            }
-            return new JsonResult(table);
+            return await _context.Goal.ToListAsync();
         }
 
         [HttpPost]
-        public JsonResult Post(Goal goal)
+        public async Task<ActionResult<Expense>> PostGoal(Goal goal)
         {
-            string query = @"insert into dbo.Goal values (@GoalName, @GoalCategory, @GoalAmount, @GoalDate)";
-            DataTable table = new DataTable();
-            string sqlDataSource = _configuration.GetConnectionString("MoneySaverCon");
-            SqlDataReader myReader;
-            using (SqlConnection myCon = new SqlConnection(sqlDataSource))
-            {
-                myCon.Open();
-                using (SqlCommand myCommand = new SqlCommand(query, myCon))
-                {
-                    myCommand.Parameters.AddWithValue("@GoalName", goal.GoalName);
-                    myCommand.Parameters.AddWithValue("@GoalCategory", goal.GoalCategory);
-                    myCommand.Parameters.AddWithValue("@GoalAmount", goal.GoalAmount);
-                    myCommand.Parameters.AddWithValue("@GoalDate", goal.GoalDate);
-                    myReader = myCommand.ExecuteReader();
-                    table.Load(myReader);
-                    myReader.Close();
-                    myCon.Close();
-                }
-            }
-            return new JsonResult("Added Sucessfully!");
+            _context.Goal.Add(goal);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction("GetGoal", new { id = goal.GoalId }, goal);
         }
 
 
-        [HttpPut]
-        public JsonResult Put(Goal goal)
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutGoal(int id, Goal goal)
         {
-            string query = @"update dbo.Goal set GoalName=@GoalName, GoalCategory=@GoalCategory, GoalAmount=@GoalAmount, GoalDate=@GoalDate
-                              where GoalId=@GoalId";
-            DataTable table = new DataTable();
-            string sqlDataSource = _configuration.GetConnectionString("MoneySaverCon");
-            SqlDataReader myReader;
-            using (SqlConnection myCon = new SqlConnection(sqlDataSource))
+            if (id != goal.GoalId)
             {
-                myCon.Open();
-                using (SqlCommand myCommand = new SqlCommand(query, myCon))
+                return BadRequest();
+            }
+            _context.Entry(goal).State = EntityState.Modified;
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!GoalExists(id))
                 {
-                    myCommand.Parameters.AddWithValue("@GoalId", goal.GoalId);
-                    myCommand.Parameters.AddWithValue("@GoalName", goal.GoalName);
-                    myCommand.Parameters.AddWithValue("@GoalCategory", goal.GoalCategory);
-                    myCommand.Parameters.AddWithValue("@GoalAmount", goal.GoalAmount);
-                    myCommand.Parameters.AddWithValue("@GoalDate", goal.GoalDate);
-                    myReader = myCommand.ExecuteReader();
-                    table.Load(myReader);
-                    myReader.Close();
-                    myCon.Close();
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
                 }
             }
-            return new JsonResult("Updated Sucessfully!");
+            return NoContent();
         }
 
         [HttpDelete("{id}")]
-        public JsonResult Delete(int id)
+        public async Task<ActionResult<Goal>> DeleteGoal(int id)
         {
-            string query = @"delete from dbo.Goal where GoalId=@GoalId";
-            DataTable table = new DataTable();
-            string sqlDataSource = _configuration.GetConnectionString("MoneySaverCon");
-            SqlDataReader myReader;
-            using (SqlConnection myCon = new SqlConnection(sqlDataSource))
+            var goal = await _context.Goal.FindAsync(id);
+            if (goal == null)
             {
-                myCon.Open();
-                using (SqlCommand myCommand = new SqlCommand(query, myCon))
-                {
-                    myCommand.Parameters.AddWithValue("@GoalId", id);
-                    myReader = myCommand.ExecuteReader();
-                    table.Load(myReader);
-                    myReader.Close();
-                    myCon.Close();
-                }
+                return NotFound();
             }
-            return new JsonResult("Deleted Sucessfully!");
+
+            _context.Goal.Remove(goal);
+            await _context.SaveChangesAsync();
+
+            return goal;
+        }
+
+        private bool GoalExists(int id)
+        {
+            return _context.Goal.Any(e => e.GoalId == id);
         }
 
     }

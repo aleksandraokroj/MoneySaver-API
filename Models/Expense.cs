@@ -11,6 +11,6 @@ namespace MoneySaverAPI.Models
         public string ExpenseName { get; set; }
         public string ExpenseCategory { get; set; }
         public decimal ExpenseAmount { get; set; }
-        public string ExpenseDate { get; set; }
+        public DateTime ExpenseDate { get; set; }
     }
 }

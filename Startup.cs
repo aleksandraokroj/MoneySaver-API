@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -34,6 +35,7 @@ namespace MoneySaverAPI
         public void ConfigureServices(IServiceCollection services)
         {
             var authenticationSettings = new AuthenticationSettings();
+            var connection = Configuration.GetConnectionString("MoneySaverCon");
             Configuration.GetSection("Authentication").Bind(authenticationSettings);
             //Enable CORS 
             services.AddCors(c =>
@@ -45,7 +47,7 @@ namespace MoneySaverAPI
             services.AddControllersWithViews().AddNewtonsoftJson(options =>
             options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore)
                 .AddNewtonsoftJson(options => options.SerializerSettings.ContractResolver = new DefaultContractResolver());
-
+            services.AddDbContext<MoneySaverDbContext>(o => o.UseSqlServer(connection));
             services.AddControllers().AddFluentValidation();
             services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
             services.AddScoped<IValidator<User>, RegisterUserValidator>();

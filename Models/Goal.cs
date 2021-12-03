@@ -11,6 +11,6 @@ namespace MoneySaverAPI.Models
         public string GoalName { get; set; }
         public string GoalCategory { get; set; }
         public decimal GoalAmount { get; set; }
-        public string GoalDate { get; set; }
+        public DateTime GoalDate { get; set; }
     }
 }
