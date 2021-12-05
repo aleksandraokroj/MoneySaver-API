@@ -32,7 +32,7 @@ namespace MoneySaverAPI.Controllers
             _authenticationSettings = authenticationSettings;
         }
         [HttpPost("register")]
-        public ActionResult RegisterUser(RegisterUserDto dto)
+        public async Task<ActionResult<User>> RegisterUser(RegisterUserDto dto)
         {
             var newUser = new User()
             {
@@ -43,8 +43,7 @@ namespace MoneySaverAPI.Controllers
 
             newUser.PasswordHash = hashedPassword;
                 _context.User.Add(newUser);
-                _context.SaveChangesAsync();     
-
+            await _context.SaveChangesAsync();
             return Ok();
 
         }
