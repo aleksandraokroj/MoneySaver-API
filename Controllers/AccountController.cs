@@ -79,8 +79,9 @@ namespace MoneySaverAPI.Controllers
                 expires: expires,
                 signingCredentials: cred);
             var tokenHandler = new JwtSecurityTokenHandler();
+            var response = new { Token = tokenHandler.WriteToken(token), user.Id };
 
-            return Ok(tokenHandler.WriteToken(token));
+            return Ok(response);
         }
     }
 }

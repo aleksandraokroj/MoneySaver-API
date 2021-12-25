@@ -9,6 +9,7 @@ namespace MoneySaverAPI.Models
     {
         public int ExpenseId { get; set; }
         public string ExpenseName { get; set; }
+        public string ExpenseType { get; set; }
         public string ExpenseCategory { get; set; }
         public decimal ExpenseAmount { get; set; }
         public DateTime ExpenseDate { get; set; }
