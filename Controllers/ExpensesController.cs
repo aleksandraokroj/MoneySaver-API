@@ -30,6 +30,12 @@ namespace MoneySaverAPI.Controllers
             return await _context.Expense.ToListAsync();
         }
 
+        [HttpGet("{id}")]
+        public async Task<ActionResult<IEnumerable<Expense>>> GetExpenses(int id)
+        {
+            return await _context.Expense.Where(e => e.UserId == id ).ToListAsync();
+        }
+
         [HttpPost]
         public async Task<ActionResult<Expense>> PostExpense(Expense exp)
         {

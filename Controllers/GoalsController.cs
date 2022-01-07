@@ -29,6 +29,12 @@ namespace MoneySaverAPI.Controllers
             return await _context.Goal.ToListAsync();
         }
 
+        [HttpGet("{id}")]
+        public async Task<ActionResult<IEnumerable<Goal>>> GetGoals(int id)
+        {
+            return await _context.Goal.Where(g => g.UserId == id).ToListAsync();
+        }
+
         [HttpPost]
         public async Task<ActionResult<Expense>> PostGoal(Goal goal)
         {
