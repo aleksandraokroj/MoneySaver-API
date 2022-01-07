@@ -16,15 +16,6 @@ namespace MoneySaverAPI.Models.Validators
 
             RuleFor(x => x.ConfirmPassword).Equal(e=> e.Password);
 
-            //RuleFor(x => x.Email).Custom((value, context) =>
-            //{
-            //    var emailInUse = dbContext.Expense.Any(u => u.ExpenseName == value);
-            //    if (emailInUse)
-            //    {
-            //        context.AddFailure("Email", "That email is taken");
-            //    }
-            //});
-
         }
     }
 }

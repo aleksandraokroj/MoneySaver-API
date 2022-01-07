@@ -37,6 +37,7 @@ namespace MoneySaverAPI.Controllers
             var newUser = new User()
             {
                 Email = dto.Email,
+                FirstName = dto.FirstName,
                 PasswordHash = dto.Password
             };
             var hashedPassword = _passwordHasher.HashPassword(newUser, dto.Password);
@@ -79,7 +80,7 @@ namespace MoneySaverAPI.Controllers
                 expires: expires,
                 signingCredentials: cred);
             var tokenHandler = new JwtSecurityTokenHandler();
-            var response = new { Token = tokenHandler.WriteToken(token), user.Id };
+            var response = new { Token = tokenHandler.WriteToken(token), user.Id, user.FirstName };
 
             return Ok(response);
         }
